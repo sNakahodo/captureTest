@@ -1,0 +1,78 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+</head>
+
+<body>
+
+<video id="video" width="640" height="480" autoplay></video>
+<button id="snap">Snap photo</button>
+<button id="repeat">Snap again</button>
+<button id="send">to image</button>
+<canvas id="canvas" width="640" height="480" style="display:none;">Snap photo</canvas>
+
+<script>
+
+// Put event listeners into place
+$(function(){
+	// Grab elements, create settings, etc.
+	var canvas = document.getElementById("canvas"),
+		context = canvas.getContext("2d"),
+		video = document.getElementById("video"),
+		videoObj = { "video": true},
+		errBack = function(error) {
+			console.log("Video capture error: ", error.code); 
+		};
+
+	// Put video listeners into place
+	if(navigator.getUserMedia) { // Standard
+		navigator.getUserMedia(videoObj, function(stream) {
+			video.src = stream;
+			video.play();
+		}, errBack);
+	} else if(navigator.mozGetUserMedia) { // WebKit-prefixed
+		navigator.mozGetUserMedia(videoObj, function(stream) {
+			video.mozSrcObject = stream;
+			video.play();
+			document.getElementById("snap").addEventListener("click", function() {
+				context.drawImage(video, 0, 0, 640, 480);
+				video.pause();
+			});
+			document.getElementById("repeat").addEventListener("click", function() {
+				video.play();
+			});
+			document.getElementById("send").addEventListener("click", function() {
+				var data = canvas.toDataURL();
+				console.log(data);	
+				var options = {
+					data: {raw:data},
+					type: "post",
+					url: "generate.php"
+				};
+				$.ajax(options);
+			});
+		}, errBack);
+	} else if(navigator.webkitGetUserMedia) { // WebKit-prefixed
+		navigator.webkitGetUserMedia(videoObj, function(stream){
+			video.src = window.webkitURL.createObjectURL(stream);
+			video.play();
+		}, errBack);
+	} else {
+		alert("this application runs on only Firefox 21+ and Google Chrome 21+");
+	} 
+
+	// Trigger photo take
+/*
+	document.getElementById("snap").addEventListener("click", function() {
+		context.drawImage(video, 0, 0, 640, 480);
+	});
+*/
+});
+
+</script>
+
+</body>
+
+</html>
